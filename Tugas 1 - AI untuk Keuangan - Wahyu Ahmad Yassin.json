@@ -1,0 +1,240 @@
+{
+  "name": "Tugas 1 - AI untuk Keuangan - Wahyu Ahmad Yassin",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Pembuatan Invoice Otomatis",
+        "formDescription": "Form ini digunakan untuk memasukkan data klien dan menghitung total tagihan secara otomatis.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Nama Klien",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Jam Kerja",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Rate per jam",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email Klien",
+              "fieldType": "email",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        32,
+        -128
+      ],
+      "id": "625dca91-ce18-4b4f-a668-05a677ae263f",
+      "name": "On form submission",
+      "webhookId": "080a7e7d-84c6-4249-863a-4269bf690575"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a525b631-02d0-4e13-a7a7-6933786057c4",
+              "name": "Total Biaya",
+              "value": "={{ \"Rp\" + (\n  Number($json[\"Jam Kerja\"]) *\n  Number(\n    String($json[\"Rate per jam\"])\n      .replace(/[^0-9,.-]/g, \"\")\n      .replace(/\\./g, \"\")\n      .replace(\",\", \".\")\n  )\n).toLocaleString(\"id-ID\") }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        256,
+        -128
+      ],
+      "id": "c64d0cc7-47c6-404b-b734-64ce3522b334",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "html": "\n<!DOCTYPE html>\n<html lang=\"id\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Invoice Jasa</title>\n  <style>\n    body {\n      font-family: Arial, sans-serif;\n      color: #263238;\n      padding: 30px;\n      background: #f4f7fb;\n    }\n    .invoice {\n      max-width: 700px;\n      margin: auto;\n      padding: 35px;\n      background: white;\n      border: 1px solid #ddd;\n    }\n    .header {\n      border-bottom: 3px solid #2563eb;\n      padding-bottom: 15px;\n      margin-bottom: 25px;\n    }\n    h1 { color: #2563eb; margin-bottom: 5px; }\n    .label { color: #64748b; font-size: 13px; }\n    table {\n      width: 100%;\n      border-collapse: collapse;\n      margin-top: 20px;\n    }\n    th, td {\n      padding: 12px;\n      border-bottom: 1px solid #e2e8f0;\n      text-align: left;\n    }\n    th { background: #eff6ff; }\n    .total {\n      text-align: right;\n      font-size: 22px;\n      font-weight: bold;\n      color: #2563eb;\n      margin-top: 25px;\n    }\n    .footer {\n      margin-top: 45px;\n      color: #64748b;\n      font-size: 12px;\n      text-align: center;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"invoice\">\n    <div class=\"header\">\n      <h1>INVOICE</h1>\n      <div class=\"label\">Tagihan Jasa Pekerjaan</div>\n      <p>Nomor Invoice: INV-{{ $execution.id }}</p>\n      <p>Tanggal: {{ $now.setZone('Asia/Jakarta').toFormat('dd-MM-yyyy') }}</p>\n    </div>\n\n    <h3>Ditagihkan Kepada</h3>\n    <p><strong>{{ $('On form submission').item.json['Nama Klien'] }}</strong></p>\n    <p>{{ $('On form submission').item.json['Email Klien'] }}</p>\n\n    <h3>Detail Tagihan</h3>\n    <table>\n      <thead>\n        <tr>\n          <th>Deskripsi</th>\n          <th>Jam Kerja</th>\n          <th>Rate per Jam</th>\n        </tr>\n      </thead>\n      <tbody>\n        <tr>\n          <td>Jasa Pekerjaan / Konsultasi</td>\n          <td>{{ $('On form submission').item.json['Jam Kerja'] }} jam</td>\n          <td>Rp{{ $('On form submission').item.json['Rate per jam'] }}</td>\n        </tr>\n      </tbody>\n    </table>\n\n    <div class=\"total\">\n      Total Biaya: {{ $json[\"Total Biaya\"] }}\n    </div>\n\n    <div class=\"footer\">\n      Invoice ini dibuat secara otomatis.<br>\n      Terima kasih atas kepercayaan Anda.\n    </div>\n  </div>\n</body>\n</html>"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        -128
+      ],
+      "id": "0b85a129-63c4-4aa8-822a-2167eadbd582",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.pdfshift.io/v3/convert/pdf",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "source",
+              "value": "={{ $json.html }}"
+            },
+            {
+              "name": "filename",
+              "value": "invoice.pdf"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        880,
+        -128
+      ],
+      "id": "bb102ad7-a78e-48db-9dec-5db12cc2569c",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "sendTo": "wahyuyassin@gmail.com",
+        "subject": "Invoice Training",
+        "message": "=<div style=\"font-family: Arial, Helvetica, sans-serif; color: #333333; line-height: 1.6; max-width: 600px; margin: 0 auto;\">\n\n  <div style=\"background-color: #2563eb; color: #ffffff; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;\">\n    <h2 style=\"margin: 0;\">INVOICE TAGIHAN</h2>\n    <p style=\"margin: 5px 0 0;\">Invoice Training</p>\n  </div>\n\n  <div style=\"padding: 24px; border: 1px solid #dddddd;\">\n\n    <p>Yth. <strong>{{ $('On form submission').item.json['Nama Klien'] }}</strong>,</p>\n\n    <p>Terima kasih telah menggunakan jasa kami. Berikut ringkasan tagihan atas pekerjaan yang telah dilakukan.</p>\n\n    <h3 style=\"color: #2563eb;\">Ringkasan Tagihan</h3>\n\n    <table style=\"width: 100%; border-collapse: collapse; margin: 16px 0;\">\n      <tr>\n        <td style=\"padding: 12px; border: 1px solid #dddddd; background-color: #f3f4f6;\">Nama Klien</td>\n        <td style=\"padding: 12px; border: 1px solid #dddddd;\">{{ $('On form submission').item.json['Nama Klien'] }}</td>\n      </tr>\n      <tr>\n        <td style=\"padding: 12px; border: 1px solid #dddddd; background-color: #f3f4f6;\">Jam Kerja</td>\n        <td style=\"padding: 12px; border: 1px solid #dddddd;\">{{ $('On form submission').item.json['Jam Kerja'] }} jam</td>\n      </tr>\n      <tr>\n        <td style=\"padding: 12px; border: 1px solid #dddddd; background-color: #f3f4f6;\">Total Biaya</td>\n        <td style=\"padding: 12px; border: 1px solid #dddddd; color: #2563eb; font-size: 18px;\">\n          <strong>{{ $(\"Edit Fields\").first().json[\"Total Biaya\"] }}</strong>\n        </td>\n      </tr>\n    </table>\n\n    <p>Invoice lengkap tersedia dalam file PDF yang kami lampirkan pada email ini. Silakan periksa rincian tagihan tersebut.</p>\n\n    <p>Apabila terdapat pertanyaan mengenai tagihan, silakan membalas email ini.</p>\n\n    <p>Terima kasih atas kepercayaan Anda.</p>\n\n    <p>Hormat kami,<br><strong>Tim Administrasi</strong></p>\n\n  </div>\n\n  <div style=\"background-color: #f3f4f6; padding: 12px; text-align: center; color: #666666; font-size: 12px;\">\n    Email ini dikirim secara otomatis melalui workflow n8n.\n  </div>\n\n</div>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1104,
+        -128
+      ],
+      "id": "005e92cf-7327-47c8-a520-1c0f40923d10",
+      "name": "Send a message",
+      "webhookId": "9ef12cb5-1e5b-4ccc-8858-db73ad1e1691",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2vq3jrPfy2mGfkOH",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.pdfshift.io/v3/convert/pdf",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "source",
+              "value": "={{ $json.html }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        672,
+        -128
+      ],
+      "id": "c4c856fa-7341-460b-9190-992109b06ea5",
+      "name": "HTML to PDF",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "yCh9xAtxmKHldltw",
+          "name": "Header Auth account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "HTML to PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML to PDF": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "61107177-6cd7-43e8-b95a-31cd1c57a0c9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dc96f10ae7dc95d3c138575ba243a0a167923dbcb524841d451aadf9135d5fb3"
+  },
+  "nodeGroups": [],
+  "id": "8TB77m6WuuPop2GL",
+  "tags": []
+}
