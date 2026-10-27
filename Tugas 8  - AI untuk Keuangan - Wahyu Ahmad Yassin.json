@@ -1,0 +1,440 @@
+{
+  "name": "Tugas 8  - AI untuk Keuangan - Wahyu Ahmad Yassin",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "name": "Tiap 15 menit",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        128,
+        -16
+      ],
+      "id": "c5349f9c-89c1-4542-8f00-872a5d0b12d4",
+      "typeVersion": 1.4
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the sentiment of the following tweet about Bitcoin (BTC) or Ethereum (ETH). Respond ONLY with ONE word: Positive, Negative, or Neutral.\n\nTweet:\n{{ $json.text }}\n\nClassification rules:\n- Positive: Bullish outlook, optimism, expected price increases, or positive market developments.\n- Negative: Bearish outlook, pessimism, expected price decreases, or negative market developments.\n- Neutral: Factual information, mixed opinions, unclear sentiment, or no clear bullish/bearish direction.\n\nClassify the sentiment expressed in the tweet, not just the presence of positive or negative words. Ignore unrelated promotional content.\n\nOutput exactly one word: Positive, Negative, or Neutral.",
+        "batching": {}
+      },
+      "name": "Analisis Sentimen",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        752,
+        -16
+      ],
+      "id": "45fe9c5b-2ada-4cc5-aee0-d91beaa60d13",
+      "typeVersion": 1.9
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1JHEM3DHaKu3kuG__TUXEjyMdV5DExx4srEGGfKWMmHQ",
+          "mode": "list",
+          "cachedResultName": "Analisis Sentimen BTC ETH",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JHEM3DHaKu3kuG__TUXEjyMdV5DExx4srEGGfKWMmHQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Data Mentah",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JHEM3DHaKu3kuG__TUXEjyMdV5DExx4srEGGfKWMmHQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $('Split Out').item.json.createdAt }}",
+            "ID Tweet": "={{ $('Split Out').item.json.id }}",
+            "Teks": "={{ $('Split Out').item.json.text }}",
+            "Sentimen": "={{ $json.text.trim() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ID Tweet",
+              "displayName": "ID Tweet",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Teks",
+              "displayName": "Teks",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sentimen",
+              "displayName": "Sentimen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Penyimpanan Hasil",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1072,
+        -16
+      ],
+      "id": "6c49db72-b62e-4328-8069-78ad05b5802c",
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "T9eh1WhJRY3wZVHb",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "name": "Tiap jam 7 pagi",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        96,
+        288
+      ],
+      "id": "f6fd2587-c4a9-4213-99e8-0df3a0cbc5ec",
+      "typeVersion": 1.4
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1JHEM3DHaKu3kuG__TUXEjyMdV5DExx4srEGGfKWMmHQ",
+          "mode": "list",
+          "cachedResultName": "Analisis Sentimen BTC ETH",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JHEM3DHaKu3kuG__TUXEjyMdV5DExx4srEGGfKWMmHQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Data Mentah",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JHEM3DHaKu3kuG__TUXEjyMdV5DExx4srEGGfKWMmHQ/edit#gid=0"
+        },
+        "combineFilters": "OR",
+        "options": {}
+      },
+      "name": "Baca Data",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        272,
+        288
+      ],
+      "id": "a6697284-1322-4942-8c80-eddc0724e5ed",
+      "typeVersion": 4.7,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "T9eh1WhJRY3wZVHb",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst items = $items(\"Baca Data\");\n\nlet positive = 0;\nlet negative = 0;\nlet neutral = 0;\n\nfor (const item of items) {\n  const sentiment = String(item.json.Sentimen || \"\")\n    .trim()\n    .toLowerCase();\n\n  if (sentiment === \"positive\") {\n    positive++;\n  } else if (sentiment === \"negative\") {\n    negative++;\n  } else if (sentiment === \"neutral\") {\n    neutral++;\n  }\n}\n\nconst total = positive + negative + neutral;\n\nconst percentage = (count) =>\n  total > 0\n    ? Number(((count / total) * 100).toFixed(2))\n    : 0;\n\nreturn [\n  {\n    json: {\n      total_tweets: total,\n      sentimen_positif: positive,\n      persentase_positif: percentage(positive),\n      sentimen_negatif: negative,\n      persentase_negatif: percentage(negative),\n      sentimen_netral: neutral,\n      persentase_netral: percentage(neutral),\n    },\n  },\n];"
+      },
+      "name": "Analisis Data",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        432,
+        288
+      ],
+      "id": "acfffc63-9a44-401e-8d08-df8ddf206e26",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Anda adalah seorang analis sentimen media sosial.\n\nTuliskan kesimpulan singkat dalam bahasa Indonesia untuk laporan Telegram berdasarkan data berikut:\n\n- Total Tweet Dianalisis: {{ $json.total_tweets }}\n- Sentimen Positif: {{ $json.sentimen_positif }} ({{ $json.persentase_positif }}%)\n- Sentimen Negatif: {{ $json.sentimen_negatif }} ({{ $json.persentase_negatif }}%)\n- Sentimen Netral: {{ $json.sentimen_netral }} ({{ $json.persentase_netral }}%)\n\nBerikan ringkasan singkat mengenai kecenderungan opini publik terhadap Bitcoin (BTC) dan Ethereum (ETH) berdasarkan data tersebut.\n\nKetentuan:\n1. Sebutkan sentimen yang paling dominan berdasarkan persentase.\n2. Jelaskan makna hasilnya secara singkat dan objektif.\n3. Jangan mengarang informasi harga atau kondisi pasar yang tidak tersedia.\n4. Jangan memberikan rekomendasi investasi.\n5. Gunakan bahasa Indonesia yang natural dan mudah dipahami.\n6. Maksimal 3 kalimat.",
+        "batching": {}
+      },
+      "name": "Membuat Kesimpulan",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        608,
+        288
+      ],
+      "id": "d2920c69-ef6b-46a9-8a15-9d05a1c1d2a9",
+      "typeVersion": 1.9
+    },
+    {
+      "parameters": {
+        "chatId": "1060468909",
+        "text": "=📊 *LAPORAN SENTIMEN KRIPTO HARIAN*\n\n━━━━━━━━━━━━━━━━━━\n🪙 *ASET:* Bitcoin (BTC) & Ethereum (ETH)\n📅 *Tanggal:* {{ $now.setZone('Asia/Jakarta').toFormat('dd LLLL yyyy') }}\n\n📈 *RINGKASAN ANALISIS*\nTotal tweet dianalisis: {{ $('Analisis Data').item.json.total_tweets }}\n\n🟢 *Positif:* {{ $('Analisis Data').item.json.persentase_positif }}%\n🔴 *Negatif:* {{ $('Analisis Data').item.json.persentase_negatif }}%\n⚪ *Netral:* {{ $('Analisis Data').item.json.persentase_netral }}%\n\n━━━━━━━━━━━━━━━━━━\n🤖 *KESIMPULAN AI*\n\n{{ $json.text }}\n\n━━━━━━━━━━━━━━━━━━\nℹ️ _Laporan ini menggambarkan sentimen dari tweet yang dianalisis, bukan prediksi harga atau rekomendasi investasi._",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "name": "Kirim Laporan",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        896,
+        288
+      ],
+      "id": "71d2f231-e287-4960-8d4e-8fae4c2f4fed",
+      "typeVersion": 1.2,
+      "webhookId": "1b910159-a672-4946-845f-bf02957086bc",
+      "credentials": {
+        "telegramApi": {
+          "id": "wfEYxt2vDg6bOb7n",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        752,
+        128
+      ],
+      "id": "516cb562-1240-46e9-b7fa-7255b3fb14a0",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Tccg9uELDXy9Kd7Y",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        608,
+        432
+      ],
+      "id": "03ddd7b8-62a9-44d4-8d01-ea83f2ddb948",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Tccg9uELDXy9Kd7Y",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.weirapp.io/v1/x/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer weir_live_fX5L96pNUjpmF4iS7myzEE8vuPYQzkLZF4uNKEEKO_M"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"query\": \"$BTC OR $ETH\",\n  \"sort\": \"latest\",\n  \"limit\": 10\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        336,
+        -16
+      ],
+      "id": "f4cc3358-d56f-4a14-a7de-c714400e3ae2",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        560,
+        -16
+      ],
+      "id": "1e75cbab-8b51-44ec-89a8-e2e4e5e08af2",
+      "name": "Split Out"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Tiap 15 menit": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analisis Sentimen": {
+      "main": [
+        [
+          {
+            "node": "Penyimpanan Hasil",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tiap jam 7 pagi": {
+      "main": [
+        [
+          {
+            "node": "Baca Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baca Data": {
+      "main": [
+        [
+          {
+            "node": "Analisis Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analisis Data": {
+      "main": [
+        [
+          {
+            "node": "Membuat Kesimpulan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Membuat Kesimpulan": {
+      "main": [
+        [
+          {
+            "node": "Kirim Laporan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Analisis Sentimen",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Membuat Kesimpulan",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Analisis Sentimen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ee600124-ef12-4379-8d64-139f0472c645",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dc96f10ae7dc95d3c138575ba243a0a167923dbcb524841d451aadf9135d5fb3"
+  },
+  "nodeGroups": [],
+  "id": "Wv905qrJathsjBk2",
+  "tags": []
+}
