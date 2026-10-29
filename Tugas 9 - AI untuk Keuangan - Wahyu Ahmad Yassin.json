@@ -1,0 +1,388 @@
+{
+  "name": "Tugas 9 - AI untuk Keuangan - Wahyu Ahmad Yassin",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "function SMA(data, period) {\n  if (!data || data.length < period) return null;\n  const slice = data.slice(data.length - period);\n  return slice.reduce((a, b) => a + b, 0) / period;\n}\n\nfunction RSI(data, period = 14) {\n  if (!data || data.length <= period) return null;\n  let gains = 0, losses = 0;\n  for (let i = data.length - period; i < data.length; i++) {\n    const diff = data[i] - data[i - 1];\n    if (diff >= 0) gains += diff;\n    else losses -= diff;\n  }\n  const avgGain = gains / period;\n  const avgLoss = losses / period;\n  if (avgLoss === 0) return 100;\n  return 100 - (100 / (1 + (avgGain / avgLoss)));\n}\n\nconst item = $input.first();\nconst resultData = item.json.chart?.result?.[0];\nif (!resultData) return [];\n\nconst symbol = resultData.meta?.symbol || 'BTC-USD';\nconst rawCloses = resultData.indicators?.quote?.[0]?.close || [];\nconst closes = rawCloses.filter(v => v !== null && v !== undefined);\n\nif (closes.length === 0) return [];\n\nconst lastClose = closes[closes.length - 1];\nconst ma50Val = SMA(closes, 50);\nconst ma200Val = SMA(closes, 200);\nconst rsiVal = RSI(closes, 14);\n\nlet signal = '⚪ Tidak ada sinyal saat ini';\nif (rsiVal !== null && rsiVal < 30) signal = '🔵 RSI Oversold (Potensi Buy)';\nelse if (rsiVal !== null && rsiVal > 70) signal = '🔴 RSI Overbought (Potensi Sell)';\nelse if (ma50Val !== null && ma200Val !== null && ma50Val > ma200Val) signal = '🟢 Golden Cross (Buy Signal)';\nelse if (ma50Val !== null && ma200Val !== null && ma50Val < ma200Val) signal = '🔻 Death Cross (Sell Signal)';\n\nreturn [{\n  json: {\n    symbol,\n    lastClose: lastClose ? `$${lastClose.toFixed(2)}` : 'N/A',\n    rsi: rsiVal !== null ? rsiVal.toFixed(2) : 'N/A',\n    ma50: ma50Val !== null ? ma50Val.toFixed(2) : 'N/A',\n    ma200: ma200Val !== null ? ma200Val.toFixed(2) : 'N/A',\n    signal\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        720
+      ],
+      "id": "e3345283-e8cf-4990-99cc-2589778f9e8f",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -192,
+        720
+      ],
+      "id": "3b1a13d0-d9c8-40a7-a075-fc94132da8a8",
+      "name": "Schedule Trigger2"
+    },
+    {
+      "parameters": {
+        "chatId": "1060468909",
+        "text": "=📊 ₿ ANALISIS [{{ $json.symbol }}]\n\n💰 Harga terakhir: {{$json[\"lastClose\"]}}\n📈 RSI 14: {{$json[\"rsi\"]}}\n📊 SMA 50: {{$json[\"ma50\"]}}\n📊 SMA 200: {{$json[\"ma200\"]}}\n\n🚨 Sinyal: {{$json[\"signal\"]}}\n⏱️ Timeframe: 5 menit",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        720
+      ],
+      "id": "29593465-3286-4c98-9a3f-096dda0e3e7a",
+      "name": "Kirim Pesan ke Tele BTC1",
+      "webhookId": "21c883fb-4c37-455d-bf5b-4d7a51bf9be8",
+      "credentials": {
+        "telegramApi": {
+          "id": "wfEYxt2vDg6bOb7n",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -432,
+        368
+      ],
+      "id": "129347c9-ffef-4fe6-893b-2b8a4cad7125",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"symbol\": [ \"AAPL\" , \"TSLA\", \"MSFT\"]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [
+        -208,
+        368
+      ],
+      "id": "f42240c2-3a80-483f-b666-577ae3f7848b",
+      "name": "Watchlist1"
+    },
+    {
+      "parameters": {
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?range=1y&interval=1d",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        16,
+        176
+      ],
+      "id": "013b7215-aca4-422e-8055-b114c496db82",
+      "name": "AAPL"
+    },
+    {
+      "parameters": {
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/TSLA?range=1y&interval=1d",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        16,
+        368
+      ],
+      "id": "3b609665-13e5-4bd4-b45f-f0c39a2927fa",
+      "name": "TSLA"
+    },
+    {
+      "parameters": {
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/MSFT?range=1y&interval=1d",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        16,
+        544
+      ],
+      "id": "96b04abd-0b74-4f09-91a3-56b7a678f824",
+      "name": "MSFT"
+    },
+    {
+      "parameters": {
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD?range=5d&interval=5m",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        32,
+        720
+      ],
+      "id": "abac978a-e510-43a5-91d5-43b9c5846f8f",
+      "name": "BTC/USD"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        240,
+        352
+      ],
+      "id": "79e96448-5269-4b91-9496-3c8370716d22",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "function SMA(data, period) {\n  if (!data || data.length < period) return null;\n  const slice = data.slice(data.length - period);\n  const sum = slice.reduce((a, b) => a + b, 0);\n  return sum / period;\n}\n\nfunction RSI(data, period = 14) {\n  if (!data || data.length <= period) return null;\n  let gains = 0, losses = 0;\n  for (let i = data.length - period; i < data.length; i++) {\n    const diff = data[i] - data[i - 1];\n    if (diff >= 0) gains += diff;\n    else losses -= diff;\n  }\n  const avgGain = gains / period;\n  const avgLoss = losses / period;\n  if (avgLoss === 0) return 100;\n  const rs = avgGain / avgLoss;\n  return 100 - (100 / (1 + rs));\n}\n\nconst output = [];\n\nfor (const item of $input.all()) {\n  const resultData = item.json.chart?.result?.[0];\n  if (!resultData) continue;\n\n  const symbol = resultData.meta?.symbol || 'UNKNOWN';\n  const rawCloses = resultData.indicators?.quote?.[0]?.close || [];\n  const closes = rawCloses.filter(v => v !== null && v !== undefined);\n\n  if (closes.length === 0) continue;\n\n  const lastClose = closes[closes.length - 1];\n  const ma50Val = SMA(closes, 50);\n  const ma200Val = SMA(closes, 200);\n  const rsiVal = RSI(closes, 14);\n\n  let signal = '⚪ Tidak ada sinyal saat ini';\n  if (rsiVal !== null && rsiVal < 30) signal = '🔵 RSI Oversold (Potensi Buy)';\n  else if (rsiVal !== null && rsiVal > 70) signal = '🔴 RSI Overbought (Potensi Sell)';\n  else if (ma50Val !== null && ma200Val !== null && ma50Val > ma200Val) signal = '🟢 Golden Cross (Buy Signal)';\n  else if (ma50Val !== null && ma200Val !== null && ma50Val < ma200Val) signal = '🔻 Death Cross (Sell Signal)';\n\n  output.push({\n    json: {\n      symbol,\n      lastClose: lastClose ? Number(lastClose.toFixed(2)) : null,\n      rsi: rsiVal !== null ? Number(rsiVal.toFixed(2)) : 'N/A',\n      ma50: ma50Val !== null ? Number(ma50Val.toFixed(2)) : 'N/A',\n      ma200: ma200Val !== null ? Number(ma200Val.toFixed(2)) : 'N/A',\n      signal\n    }\n  });\n}\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        368
+      ],
+      "id": "98c8e4d3-b883-4a70-a95f-dd6eda83bfa7",
+      "name": "Analyze Signals"
+    },
+    {
+      "parameters": {
+        "chatId": "1060468909",
+        "text": "=📊 HASIL ANALISIS SAHAM\n\nSymbol: {{$json[\"symbol\"]}}\n\n💰 Harga terakhir: {{$json[\"lastClose\"]}}\n📈 RSI: {{$json[\"rsi\"]}}\n📊 MA50: {{$json[\"ma50\"]}}\n📊 MA200: {{$json[\"ma200\"]}}\n\n🚨 Sinyal: {{$json[\"signal\"]}}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        608,
+        368
+      ],
+      "id": "71933608-d4bc-4de6-a409-814e7f08fbc7",
+      "name": "Kirim Pesan ke Tele (Stocks)",
+      "webhookId": "21c883fb-4c37-455d-bf5b-4d7a51bf9be8",
+      "credentials": {
+        "telegramApi": {
+          "id": "wfEYxt2vDg6bOb7n",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Kirim Pesan ke Tele BTC1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger2": {
+      "main": [
+        [
+          {
+            "node": "BTC/USD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Watchlist1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Watchlist1": {
+      "main": [
+        [
+          {
+            "node": "AAPL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "TSLA",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "MSFT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AAPL": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TSLA": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "MSFT": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "BTC/USD": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Analyze Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Signals": {
+      "main": [
+        [
+          {
+            "node": "Kirim Pesan ke Tele (Stocks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "99f20698-ad8f-4066-aea8-6d6f2cced2be",
+  "meta": {
+    "instanceId": "dc96f10ae7dc95d3c138575ba243a0a167923dbcb524841d451aadf9135d5fb3"
+  },
+  "nodeGroups": [],
+  "id": "WVKYn2jQWQX6QE7M",
+  "tags": []
+}
